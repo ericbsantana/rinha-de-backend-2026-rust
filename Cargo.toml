@@ -1,7 +1,4 @@
-[package]
-name = "ponos-lb"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-tokio = { version = "1.52.3", features = ["full"] }
+[workspace]
+name = "rdb-2026"
+members = ["lb", "api"]
+resolver = "2"
