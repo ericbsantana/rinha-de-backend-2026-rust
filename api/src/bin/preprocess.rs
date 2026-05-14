@@ -1,7 +1,10 @@
-use std::fs::{self, create_dir_all};
-use std::path::Path;
+use std::{
+    fs::{self, File, create_dir_all},
+    io::{BufReader, Read},
+};
 
 use api::label::{Label, N_DIMS_PADDED};
+use flate2::read::GzDecoder;
 use serde::Deserialize;
 
 const N_DIMS_RAW: usize = 14;
@@ -13,10 +16,20 @@ struct Reference {
 }
 
 fn main() -> std::io::Result<()> {
-    let input_path = "resources/example-references.json";
+    let input_path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "resources/example-references.json".to_string());
     let out_dir = "out";
 
-    let references: Vec<Reference> = serde_json::from_str(&fs::read_to_string(input_path)?)
+    let file = File::open(&input_path)?;
+    let reader: Box<dyn Read> = if input_path.ends_with(".gz") {
+        Box::new(GzDecoder::new(file))
+    } else {
+        Box::new(file)
+    };
+    let reader = BufReader::new(reader); // melhora I/O em chunks
+
+    let references: Vec<Reference> = serde_json::from_reader(reader)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
     let n = references.len();
