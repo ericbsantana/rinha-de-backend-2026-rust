@@ -1,0 +1,7 @@
+{
+    "participants": ["Eric Santana"],
+    "social": ["https://github.com/ericbsantana"],
+    "source-code-repo": "https://github.com/ericbsantana/rinha-de-backend-2026-rust",
+    "stack": ["rust", "tokio", "hyper", "simd"],
+    "open_to_work": true
+}

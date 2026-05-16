@@ -1,0 +1,17 @@
+FROM --platform=linux/amd64 rust:1-bookworm AS builder
+WORKDIR /build
+COPY Cargo.toml Cargo.lock ./
+COPY lb ./lb
+COPY api ./api
+RUN cargo build --release --bin ponos-lb
+
+FROM --platform=linux/amd64 debian:bookworm-slim AS runtime
+LABEL org.opencontainers.image.source="https://github.com/ericbsantana/rinha-de-backend-2026-rust"
+LABEL org.opencontainers.image.description="Rinha de Backend 2026 — Load Balancer (round-robin TCP)"
+LABEL org.opencontainers.image.licenses="MIT"
+WORKDIR /app
+COPY --from=builder /build/target/release/ponos-lb /app/lb
+ENV UPSTREAMS=api1:9999,api2:9999
+ENV LISTEN=0.0.0.0:9999
+EXPOSE 9999
+CMD ["/app/lb"]

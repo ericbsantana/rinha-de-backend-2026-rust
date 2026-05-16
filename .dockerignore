@@ -1,0 +1,8 @@
+target/
+out/
+.git/
+docs/
+.dockerignore
+Dockerfile.api
+Dockerfile.lb
+docker-compose.yml
