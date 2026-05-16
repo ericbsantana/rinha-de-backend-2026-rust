@@ -22,3 +22,7 @@ path = "src/api.rs"
 [[bin]]
 name = "preprocess"
 path = "src/bin/preprocess.rs"
+
+[[bin]]
+name = "compare"
+path = "src/bin/compare.rs"
