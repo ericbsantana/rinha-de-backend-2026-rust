@@ -23,18 +23,17 @@ fn mcc_risk(mcc: &str) -> f64 {
         "4511" => 0.35,
         "5311" => 0.25,
         "5999" => 0.50,
-        _ => 0.5, // default pra MCC desconhecido
+        _ => 0.5, // default for unknown MCC
     }
 }
 
 #[derive(Deserialize)]
 pub struct Payload {
-    id: String,
     transaction: Transaction,
     customer: Customer,
     merchant: Merchant,
     terminal: Terminal,
-    last_transaction: Option<LastTransactionDetails>,
+    last_transaction: Option<LastTransaction>,
 }
 
 #[derive(Deserialize)]
@@ -66,7 +65,7 @@ pub struct Terminal {
 }
 
 #[derive(Deserialize)]
-pub struct LastTransactionDetails {
+pub struct LastTransaction {
     timestamp: String,
     km_from_current: f64,
 }
@@ -118,9 +117,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn legitima_da_doc() {
+    fn legitimate_from_doc() {
         let payload = Payload {
-            id: "tx-1329056812".to_string(),
             transaction: Transaction {
                 amount: 41.12,
                 installments: 2,
@@ -146,19 +144,19 @@ mod tests {
 
         let v = vectorize(&payload);
 
-        let esperado = [
+        let expected = [
             0.0041, 0.1667, 0.05, 0.7826, // dim 3: 18/23
-            0.3333, // dim 4: quarta-feira = 2, 2/6
+            0.3333, // dim 4: wednesday = 2, 2/6
             -1.0, -1.0, 0.0292, 0.15, 0.0, 1.0, 0.0, 0.15, 0.006,
         ];
 
-        for (i, (atual, esp)) in v.iter().zip(esperado.iter()).enumerate() {
+        for (i, (actual, exp)) in v.iter().zip(expected.iter()).enumerate() {
             assert!(
-                (atual - esp).abs() < 1e-3,
-                "dim {} divergiu: esperado {}, obtido {}",
+                (actual - exp).abs() < 1e-3,
+                "dim {} diverged: expected {}, got {}",
                 i,
-                esp,
-                atual
+                exp,
+                actual
             );
         }
     }
@@ -166,7 +164,6 @@ mod tests {
     #[test]
     fn with_previous_transaction() {
         let payload = Payload {
-            id: "tx-test".to_string(),
             transaction: Transaction {
                 amount: 150.0,
                 installments: 1,
@@ -187,8 +184,8 @@ mod tests {
                 card_present: false,
                 km_from_home: 5.0,
             },
-            last_transaction: Some(LastTransactionDetails {
-                timestamp: "2026-03-11T19:30:00Z".to_string(), // 30 minutos antes
+            last_transaction: Some(LastTransaction {
+                timestamp: "2026-03-11T19:30:00Z".to_string(), // 30 minutes earlier
                 km_from_current: 250.0,
             }),
         };

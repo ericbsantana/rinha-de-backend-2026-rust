@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, File, create_dir_all},
+    fs::{self, File},
     io::{BufReader, Read},
 };
 
@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
     } else {
         Box::new(file)
     };
-    let reader = BufReader::new(reader); // melhora I/O em chunks
+    let reader = BufReader::new(reader);
 
     let references: Vec<Reference> = serde_json::from_reader(reader)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;

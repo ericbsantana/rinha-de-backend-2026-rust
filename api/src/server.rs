@@ -1,9 +1,8 @@
 use crate::dataset::Dataset;
 use crate::knn::knn;
-use crate::vectorize::{Payload, vectorize}; // ou crate::vectorize se você está dentro da lib
+use crate::vectorize::{Payload, vectorize};
 use bytes::Bytes;
-use http_body_util::BodyExt; // pro .collect() no body
-use http_body_util::Full;
+use http_body_util::{BodyExt, Full};
 use hyper::body::Incoming;
 use hyper::service::service_fn;
 use hyper::{Method, Request, Response, StatusCode};
@@ -26,8 +25,8 @@ type ResBody = Full<Bytes>;
 
 #[derive(Debug)]
 enum AppError {
-    BadJson,  // 400
-    Internal, // 500
+    BadJson,
+    Internal,
 }
 
 impl AppError {
@@ -86,10 +85,7 @@ async fn handle(
     dataset: Arc<Dataset>,
 ) -> Result<Response<ResBody>, Infallible> {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/ready") => Ok(Response::builder()
-            .status(StatusCode::OK)
-            .body(Full::new(Bytes::new()))
-            .unwrap()),
+        (&Method::GET, "/ready") => Ok(Response::new(Full::new(Bytes::new()))),
         (&Method::POST, "/fraud-score") => Ok(handle_fraud_score(req, dataset)
             .await
             .unwrap_or_else(|e| e.to_response())),
@@ -104,7 +100,7 @@ pub async fn run(listener: TcpListener, dataset: Arc<Dataset>) -> std::io::Resul
     loop {
         let (stream, _) = listener.accept().await?;
         let io = TokioIo::new(stream);
-        let dataset = Arc::clone(&dataset); // ← clone POR CONEXÃO
+        let dataset = Arc::clone(&dataset);
 
         tokio::spawn(async move {
             let service = service_fn(move |req| {

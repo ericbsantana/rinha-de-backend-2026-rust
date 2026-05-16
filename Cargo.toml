@@ -1,4 +1,3 @@
 [workspace]
-name = "rdb-2026"
 members = ["lb", "api"]
 resolver = "2"
