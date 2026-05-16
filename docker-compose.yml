@@ -1,0 +1,48 @@
+services:
+  api1:
+    image: ghcr.io/ericbsantana/rdb-2026-api:latest
+    environment:
+      - PORT=9999
+    networks:
+      - rinha
+    deploy:
+      resources:
+        limits:
+          cpus: "0.45"
+          memory: "160M"
+
+  api2:
+    image: ghcr.io/ericbsantana/rdb-2026-api:latest
+    environment:
+      - PORT=9999
+    networks:
+      - rinha
+    depends_on:
+      - api1
+    deploy:
+      resources:
+        limits:
+          cpus: "0.45"
+          memory: "160M"
+
+  lb:
+    image: ghcr.io/ericbsantana/rdb-2026-lb:latest
+    environment:
+      - UPSTREAMS=api1:9999,api2:9999
+      - LISTEN=0.0.0.0:9999
+    ports:
+      - "9999:9999"
+    networks:
+      - rinha
+    depends_on:
+      - api1
+      - api2
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: "30M"
+
+networks:
+  rinha:
+    driver: bridge
