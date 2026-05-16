@@ -1,6 +1,8 @@
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use serde::Deserialize;
 
+use crate::label::N_DIMS_PADDED;
+
 const MAX_AMOUNT: f64 = 10000.0;
 const MAX_INSTALLMENTS: f64 = 12.0;
 const AMOUNT_VS_AVG_RATIO: f64 = 10.0;
@@ -69,13 +71,13 @@ pub struct LastTransactionDetails {
     km_from_current: f64,
 }
 
-pub fn vectorize(payload: &Payload) -> [f32; 14] {
+pub fn vectorize(payload: &Payload) -> [f32; N_DIMS_PADDED] {
     let t = &payload.transaction;
     let c = &payload.customer;
     let m = &payload.merchant;
     let term = &payload.terminal;
     let lt = &payload.last_transaction;
-    let mut v = [0.0f32; 14];
+    let mut v = [0.0f32; 16];
 
     let t_dt: DateTime<Utc> = t.requested_at.parse().unwrap();
     let hour: u32 = t_dt.hour();
