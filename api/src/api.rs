@@ -1,28 +1,27 @@
 use api::dataset::Dataset;
-use api::knn::knn;
-use api::label::N_DIMS_PADDED;
+use api::server;
+use std::env;
+use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::Arc;
 
 fn main() -> std::io::Result<()> {
+    let port: u16 = env::var("PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(9999);
+
     let dataset = Arc::new(Dataset::load(Path::new("out"))?);
-    println!(
-        "loaded {} vectors, {} labels",
-        dataset.vectors().len() / 16,
-        dataset.labels().len()
-    );
+    println!("loaded {} vectors", dataset.len());
 
-    let mut query = [0.0_f32; N_DIMS_PADDED];
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
 
-    query.copy_from_slice(&dataset.vectors()[0..16]);
-
-    let start = std::time::Instant::now();
-    let neighbors = knn(&query, &dataset, 5);
-    let elapsed = start.elapsed();
-
-    println!("knn took {:?}", elapsed);
-    for (dist_sq, label) in &neighbors {
-        println!("  dist_sq={:.6} label={}", dist_sq, label);
-    }
-    Ok(())
+    rt.block_on(async move {
+        let addr = SocketAddr::from(([0, 0, 0, 0], port));
+        let listener = tokio::net::TcpListener::bind(addr).await?;
+        println!("listening on {}", addr);
+        server::run(listener, dataset).await
+    })
 }
