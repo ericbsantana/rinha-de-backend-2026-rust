@@ -26,6 +26,21 @@ impl Dataset {
         })
     }
 
+    pub fn from_parts(vectors_bytes: Vec<u8>, labels: Vec<u8>) -> Self {
+        assert_eq!(
+            vectors_bytes.len(),
+            labels.len() * N_DIMS_PADDED * size_of::<f32>(),
+            "vectors.bin and labels.bin disagree: {} vs {}",
+            vectors_bytes.len(),
+            labels.len() * N_DIMS_PADDED * size_of::<f32>()
+        );
+
+        Self {
+            vectors_bytes,
+            labels,
+        }
+    }
+
     pub fn vectors(&self) -> &[f32] {
         bytemuck::cast_slice(&self.vectors_bytes)
     }

@@ -47,3 +47,45 @@ pub fn weighted_l2_sq(q: &[f32; N_DIMS_PADDED], c: &[f32], w: &[f32; N_DIMS_PADD
     }
     sum
 }
+#[cfg(target_arch = "aarch64")]
+pub fn l_inf_neon(q: &[f32; N_DIMS_PADDED], c: &[f32]) -> f32 {
+    use std::arch::aarch64::*;
+
+    unsafe {
+        let mut acc = vdupq_n_f32(0.0);
+        for i in 0..4 {
+            let qv = vld1q_f32(q.as_ptr().add(i * 4));
+            let cv = vld1q_f32(c.as_ptr().add(i * 4));
+            let diff = vsubq_f32(qv, cv);
+            let abs_diff = vabsq_f32(diff);
+            acc = vmaxq_f32(acc, abs_diff);
+        }
+
+        vmaxvq_f32(acc)
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(target_arch = "aarch64")]
+    fn l_inf_neon_matches_scalar() {
+        let q = [
+            0.1, -0.5, 0.7, 0.2, 0.0, 0.3, 0.9, -0.1, 0.4, 0.6, -0.8, 0.05, 0.15, 0.25, 0.0, 0.0,
+        ];
+        let c = [
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        ];
+        // Esperado: max |q_i - c_i| = max |q_i| = 0.9
+        let scalar = l_inf(&q, &c);
+        let simd = l_inf_neon(&q, &c);
+        assert!(
+            (scalar - simd).abs() < 1e-6,
+            "scalar={} simd={}",
+            scalar,
+            simd
+        );
+        assert!((scalar - 0.9).abs() < 1e-6);
+    }
+    }
