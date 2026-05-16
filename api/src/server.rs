@@ -1,4 +1,5 @@
 use crate::dataset::Dataset;
+use crate::distance::l2_sq;
 use crate::knn::knn;
 use crate::vectorize::{Payload, vectorize};
 use bytes::Bytes;
@@ -11,7 +12,6 @@ use serde::Serialize;
 use std::convert::Infallible;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-
 const K_NEIGHBORS: usize = 5;
 const FRAUD_THRESHOLD: f32 = 0.6;
 
@@ -62,7 +62,7 @@ async fn handle_fraud_score(
     let payload: Payload = serde_json::from_slice(&bytes)?;
 
     let query = vectorize(&payload);
-    let neighbors = knn(&query, &dataset, K_NEIGHBORS);
+    let neighbors = knn(&query, &dataset, K_NEIGHBORS, l2_sq);
 
     let frauds = neighbors.iter().filter(|(_, label)| *label == 1).count();
     let fraud_score = frauds as f32 / K_NEIGHBORS as f32;
