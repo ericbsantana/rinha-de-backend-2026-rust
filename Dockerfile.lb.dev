@@ -1,0 +1,14 @@
+FROM rust:1-bookworm AS builder
+WORKDIR /build
+COPY Cargo.toml Cargo.lock ./
+COPY lb ./lb
+COPY api ./api
+RUN cargo build --release --bin ponos-lb
+
+FROM debian:bookworm-slim AS runtime
+WORKDIR /app
+COPY --from=builder /build/target/release/ponos-lb /app/lb
+ENV UPSTREAMS=api1:9999,api2:9999
+ENV LISTEN=0.0.0.0:9999
+EXPOSE 9999
+CMD ["/app/lb"]

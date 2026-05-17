@@ -60,9 +60,13 @@ async fn handle_fraud_score(
 ) -> Result<Response<ResBody>, AppError> {
     let bytes = req.into_body().collect().await?.to_bytes();
     let payload: Payload = serde_json::from_slice(&bytes)?;
-
     let query = vectorize(&payload);
-    let neighbors = knn(&query, &dataset, K_NEIGHBORS, l_inf_best);
+
+    let neighbors = tokio::task::spawn_blocking(move || {
+        knn(&query, &dataset, K_NEIGHBORS, l_inf_best)
+    })
+    .await
+    .map_err(|_| AppError::Internal)?;
 
     let frauds = neighbors.iter().filter(|(_, label)| *label == 1).count();
     let fraud_score = frauds as f32 / K_NEIGHBORS as f32;

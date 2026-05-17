@@ -16,6 +16,7 @@ fn main() -> std::io::Result<()> {
 
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
+        .max_blocking_threads(2)
         .build()?;
 
     rt.block_on(async move {
